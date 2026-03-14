@@ -18,7 +18,9 @@ internal final class HotKeyManager {
     private init() {}
 
     /// Installs the Carbon event handler if it hasn't been installed yet.
-    func installEventHandlerIfNeeded() {
+    /// - Throws: ``GlobalHotKeyError/eventHandlerInstallFailed(_:)`` if Carbon
+    ///   returns a non-`noErr` status (e.g. application event target not ready).
+    func installEventHandlerIfNeeded() throws {
         guard eventHandlerRef == nil else { return }
 
         var eventType = EventTypeSpec(
@@ -26,11 +28,11 @@ internal final class HotKeyManager {
             eventKind: UInt32(kEventHotKeyPressed)
         )
 
-        InstallEventHandler(
+        let status = InstallEventHandler(
             GetApplicationEventTarget(),
             { (_: EventHandlerCallRef?, event: EventRef?, _: UnsafeMutableRawPointer?) -> OSStatus in
                 var hotKeyID = EventHotKeyID()
-                let status = GetEventParameter(
+                let paramStatus = GetEventParameter(
                     event,
                     EventParamName(kEventParamDirectObject),
                     EventParamType(typeEventHotKeyID),
@@ -39,7 +41,7 @@ internal final class HotKeyManager {
                     nil,
                     &hotKeyID
                 )
-                guard status == noErr else { return status }
+                guard paramStatus == noErr else { return paramStatus }
                 HotKeyManager.shared.handlerMap[hotKeyID.id]?()
                 return noErr
             },
@@ -48,5 +50,9 @@ internal final class HotKeyManager {
             nil,
             &eventHandlerRef
         )
+
+        guard status == noErr else {
+            throw GlobalHotKeyError.eventHandlerInstallFailed(status)
+        }
     }
 }

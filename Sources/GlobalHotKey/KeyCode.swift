@@ -76,7 +76,10 @@ extension KeyCode {
         var deadKeys: UInt32 = 0
         let keyboardType = UInt32(LMGetKbdType())
 
-        let source = TISCopyCurrentKeyboardLayoutInputSource().takeRetainedValue()
+        guard let sourceRef = TISCopyCurrentKeyboardLayoutInputSource() else {
+            return nil
+        }
+        let source = sourceRef.takeRetainedValue()
         guard let ptr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else {
             return nil
         }
