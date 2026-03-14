@@ -79,7 +79,7 @@ public final class GlobalHotKey {
             throw GlobalHotKeyError.alreadyRegistered
         }
 
-        HotKeyManager.shared.installEventHandlerIfNeeded()
+        try HotKeyManager.shared.installEventHandlerIfNeeded()
 
         var eventHotKeyID = EventHotKeyID(
             signature: Self.signature,
